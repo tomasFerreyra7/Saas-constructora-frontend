@@ -9,9 +9,26 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 
 import { createProjectSchema, type CreateProjectFormValues } from '../schema/project-schema';
+import { useCreateProject } from '../api/use-create-projects';
+import { Loader2 } from 'lucide-react';
 
-export function ProjectForm() {
+interface ProjectFormProps {
+  onSuccessCallback?: () => void;
+}
+
+const handleNumberChange = (val: string, onChange: (value: any) => void) => {
+  if (val === '' || val === '-' || val === '-0' || val.endsWith('.') || (val.includes('.') && val.endsWith('0'))) {
+    onChange(val);
+  } else {
+    const num = Number(val);
+    onChange(isNaN(num) ? val : num);
+  }
+};
+
+export function ProjectForm({ onSuccessCallback }: ProjectFormProps) {
   const currentTenantId = 1;
+
+  const createProjectMutation = useCreateProject();
 
   const form = useForm({
     resolver: zodResolver(createProjectSchema) as any,
@@ -27,9 +44,16 @@ export function ProjectForm() {
   });
 
   function onSubmit(data: CreateProjectFormValues) {
-    console.log('Payload perfecto para TypeORM:', data);
-    toast.success('Obra registrada correctamente.');
-    form.reset();
+    const { userIds, tenantId, ...payloadLimpio } = data;
+
+    console.log('Enviando a NestJS:', payloadLimpio);
+
+    createProjectMutation.mutate(payloadLimpio, {
+      onSuccess: () => {
+        form.reset();
+        if (onSuccessCallback) onSuccessCallback();
+      },
+    });
   }
 
   return (
@@ -90,16 +114,7 @@ export function ProjectForm() {
                       inputMode="decimal" // Abre el teclado numérico en celulares
                       placeholder="-31.6488"
                       {...field}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        // Si está vacío, o es solo un guion, o termina en punto, lo guardamos como string temporalmente
-                        if (val === '' || val === '-' || val.endsWith('.')) {
-                          field.onChange(val);
-                        } else {
-                          // Si es un número completo, lo convertimos
-                          field.onChange(Number(val));
-                        }
-                      }}
+                      onChange={(e) => handleNumberChange(e.target.value, field.onChange)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -120,14 +135,7 @@ export function ProjectForm() {
                       inputMode="decimal"
                       placeholder="-60.7086"
                       {...field}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || val.endsWith('.')) {
-                          field.onChange(val);
-                        } else {
-                          field.onChange(Number(val));
-                        }
-                      }}
+                      onChange={(e) => handleNumberChange(e.target.value, field.onChange)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -147,14 +155,7 @@ export function ProjectForm() {
                       type="text"
                       inputMode="decimal"
                       {...field}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || val.endsWith('.')) {
-                          field.onChange(val);
-                        } else {
-                          field.onChange(Number(val));
-                        }
-                      }}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
                   <FormDescription>Distancia máxima a la redonda para que la app permita fichar.</FormDescription>
@@ -165,12 +166,19 @@ export function ProjectForm() {
           </div>
 
           {/* SECCIÓN DE BOTONES */}
+          {/* Actualizamos solo la sección de botones para mostrar el estado de carga */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-border/50">
-            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => form.reset()}>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => form.reset()} disabled={createProjectMutation.isPending}>
               Limpiar datos
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
-              Guardar Obra
+            <Button type="submit" className="w-full sm:w-auto" disabled={createProjectMutation.isPending}>
+              {createProjectMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...
+                </>
+              ) : (
+                'Guardar Obra'
+              )}
             </Button>
           </div>
         </div>

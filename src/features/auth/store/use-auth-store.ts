@@ -1,10 +1,10 @@
+import { User } from "@/features/users/types";
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface AuthState {
     token: string | null;
-    // Podríamos guardar datos del usuario logueado también
-    user: { id: number; name: string; tenantId: number } | null;
+    user: User | null;
     setAuth: (token: string, user: any) => void;
     logout: () => void;
 }
