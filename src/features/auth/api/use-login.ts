@@ -4,7 +4,6 @@ import { useAuthStore } from "../store/use-auth-store"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-// Ajusta esta interfaz según lo que pida tu backend
 interface LoginCredentials {
     email: string;
     password: string;
@@ -16,14 +15,24 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (credentials: LoginCredentials) => {
-            // Hacemos el POST a tu endpoint real
-            const { data } = await api.post("/auth/login", credentials)
-            return data
+            // PASO 1: Hacemos el POST para obtener el token
+            const { data: authData } = await api.post("/auth/login", credentials)
+            const token = authData.access_token
+
+            // PASO 2: Con el token en mano, le preguntamos al backend "¿Quién soy?"
+            // Le pasamos el token en los headers solo para esta petición
+            const { data: userData } = await api.get("/users/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            // PASO 3: Juntamos ambas cosas y las mandamos al onSuccess
+            return { token, user: userData }
         },
         onSuccess: (data) => {
-            // OJO AQUÍ: Por defecto NestJS suele devolver { access_token: "..." }
-            // Si tu backend devuelve solo { token: "..." }, cambia data.access_token por data.token
-            setAuth(data.access_token, data.user)
+            // Ahora data.user sí existe y tiene tu nombre, email, tenantId y el rol "ADMIN"
+            setAuth(data.token, data.user)
 
             toast.success("¡Bienvenido al sistema!")
 
