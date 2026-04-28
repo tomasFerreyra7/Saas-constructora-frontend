@@ -7,7 +7,7 @@ export const useCreateUser = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (newUser: CreateUserFormValues) => {
+        mutationFn: async (newUser: Omit<CreateUserFormValues, 'confirmPassword'>) => {
             // Como tu backend agarra el tenantId del Token, el payload va súper limpio
             const { data } = await api.post("/users", newUser);
             return data;

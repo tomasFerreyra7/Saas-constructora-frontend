@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -19,18 +20,26 @@ interface UserFormProps {
 export function UserForm({ onSuccessCallback }: UserFormProps) {
   const createUserMutation = useCreateUser();
 
+  // Estados para controlar la visibilidad de las contraseñas
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: '',
       email: '',
       password: '',
-      role: 'FOREMAN', // <-- Actualizado a MAYÚSCULAS
+      confirmPassword: '',
+      role: 'FOREMAN',
     },
   });
 
   function onSubmit(data: CreateUserFormValues) {
-    createUserMutation.mutate(data, {
+    // Extraemos "confirmPassword" para no mandarlo al backend de NestJS
+    const { confirmPassword, ...payloadLimpio } = data;
+
+    createUserMutation.mutate(payloadLimpio, {
       onSuccess: () => {
         form.reset();
         if (onSuccessCallback) onSuccessCallback();
@@ -82,9 +91,55 @@ export function UserForm({ onSuccessCallback }: UserFormProps) {
                 <FormItem>
                   <FormLabel>Contraseña de Acceso</FormLabel>
                   <FormControl>
-                    <Input type="password" className="bg-muted/20 transition-colors focus:bg-background" placeholder="Mínimo 8 caracteres" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        className="bg-muted/20 transition-colors focus:bg-background pr-10"
+                        placeholder="Mínimo 8 caracteres"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormDescription>Debe incluir al menos una mayúscula, una minúscula y un número.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Repetir Contraseña</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="bg-muted/20 transition-colors focus:bg-background pr-10"
+                        placeholder="Vuelve a escribir la contraseña"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -109,7 +164,6 @@ export function UserForm({ onSuccessCallback }: UserFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* <-- Valores actualizados a MAYÚSCULAS --> */}
                       <SelectItem value="FOREMAN">Capataz (Solo lectura en Obras)</SelectItem>
                       <SelectItem value="ADMIN">Administrador (Acceso total)</SelectItem>
                     </SelectContent>
