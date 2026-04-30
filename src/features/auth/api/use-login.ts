@@ -3,6 +3,7 @@ import { api } from "@/lib/api"
 import { useAuthStore } from "../store/use-auth-store"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import Cookies from 'js-cookie';
 
 interface LoginCredentials {
     email: string;
@@ -33,6 +34,8 @@ export const useLogin = () => {
         onSuccess: (data) => {
             // Ahora data.user sí existe y tiene tu nombre, email, tenantId y el rol "ADMIN"
             setAuth(data.token, data.user)
+
+            Cookies.set('auth_token', data.token, { expires: 1 })
 
             toast.success("¡Bienvenido al sistema!")
 

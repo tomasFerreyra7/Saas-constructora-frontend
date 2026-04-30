@@ -6,10 +6,10 @@ export default function DashboardPage() {
 
       {/* Cajas de ejemplo para probar el grid de Tailwind */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+        {/* <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
           <h3 className="font-semibold leading-none tracking-tight">Obras Activas</h3>
           <p className="text-2xl font-bold mt-2">12</p>
-        </div>
+        </div> */}
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
           <h3 className="font-semibold leading-none tracking-tight">Presupuestos Pendientes</h3>
           <p className="text-2xl font-bold mt-2">4</p>
